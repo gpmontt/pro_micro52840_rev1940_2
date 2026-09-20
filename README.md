@@ -78,14 +78,18 @@ From the repo root, with the venv activated:
 ```sh
 source .zmk/.venv/bin/activate
 export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-0.16.8"
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 cd .zmk
 
-west build -d build/left -b nice_nano_v2 -- \
+west build -s zmk/app -d build/left -b nice_nano_v2 -- \
   -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config"
 
-west build -d build/right -b nice_nano_v2 -- \
+west build -s zmk/app -d build/right -b nice_nano_v2 -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config"
 ```
+
+(`ZEPHYR_TOOLCHAIN_VARIANT` and `-s zmk/app` are both required — without them
+CMake fails to find the SDK / the app source respectively.)
 
 Firmware output: `.zmk/build/left/zephyr/zmk.uf2` and
 `.zmk/build/right/zephyr/zmk.uf2`.
@@ -101,11 +105,11 @@ To instead plug the **right** half into USB, build the reversed-role variants
 (also produced automatically by `build.yaml` / GitHub Actions):
 
 ```sh
-west build -d build/left-peripheral -b nice_nano_v2 -- \
+west build -s zmk/app -d build/left-peripheral -b nice_nano_v2 -- \
   -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config" \
   -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=n
 
-west build -d build/right-central -b nice_nano_v2 -- \
+west build -s zmk/app -d build/right-central -b nice_nano_v2 -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
   -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y
 ```
