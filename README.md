@@ -90,6 +90,32 @@ west build -d build/right -b nice_nano_v2 -- \
 Firmware output: `.zmk/build/left/zephyr/zmk.uf2` and
 `.zmk/build/right/zephyr/zmk.uf2`.
 
+#### Either half as the USB/host side
+
+By default `corne_left` is central (the half you plug into USB / pair to your
+computer) and `corne_right` is peripheral. USB is already ZMK's default
+preferred output whenever the central half is plugged in — no extra config
+needed for that.
+
+To instead plug the **right** half into USB, build the reversed-role variants
+(also produced automatically by `build.yaml` / GitHub Actions):
+
+```sh
+west build -d build/left-peripheral -b nice_nano_v2 -- \
+  -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config" \
+  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=n
+
+west build -d build/right-central -b nice_nano_v2 -- \
+  -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
+  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y
+```
+
+Flash `corne_left` + `corne_right` together (left plugged into USB), or
+`corne_left_peripheral` + `corne_right_central` together (right plugged into
+USB) — never mix a central build from one set with a peripheral build from
+the other. After switching which set is flashed, re-pair both halves (flash
+`settings_reset` to both first if pairing seems stuck).
+
 To rebuild after keymap/config changes, add `-p` (pristine) if you change
 board/shield, otherwise a plain `west build -d build/left` re-run picks up
 `config/` edits.
