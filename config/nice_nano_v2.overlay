@@ -1,0 +1,16 @@
+/*
+ * Required for CONFIG_ZMK_USB_LOGGING: nice_nano_v2's devicetree has no
+ * CDC-ACM console node by default, so USB_CDC_ACM has nothing to attach to.
+ */
+
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
+
+/ {
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+    };
+};
