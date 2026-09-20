@@ -36,8 +36,12 @@ sudo pacman -S --needed base-devel cmake ninja gperf ccache dfu-util \
 cd /home/gpmontt/Documents/pro_micro52840_rev1940_2
 python -m venv .zmk/.venv
 source .zmk/.venv/bin/activate
-pip install -U pip west
+pip install -U pip west "setuptools<81"
 ```
+
+(`setuptools<81` is required for ZMK Studio builds only: nanopb's protobuf
+code generator imports `pkg_resources`, which newer `setuptools` releases
+dropped. Building without Studio doesn't need this pin.)
 
 Activate this venv (`source .zmk/.venv/bin/activate`) in every new shell
 before running `west` commands.
@@ -54,7 +58,11 @@ west zephyr-export
 west packages pip --install
 ```
 
-This downloads several hundred MB and can take a while.
+This downloads several hundred MB and can take a while. It also fetches
+`nanopb` and `zmk-studio-messages` (needed for ZMK Studio, see below) — if a
+prior `west update` ever ran with `manifest.project-filter` excluding them
+(check `west config manifest.project-filter`), clear it first with
+`west config --delete manifest.project-filter` and re-run `west update`.
 
 ### 4. Install the Zephyr SDK (arm-zephyr-eabi toolchain only)
 
@@ -85,14 +93,18 @@ export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-0.16.8"
 export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 cd .zmk
 
-west build -s zmk/app -d build/left -b nice_nano_v2 -- \
+west build -s zmk/app -d build/left -b nice_nano_v2 -S studio-rpc-usb-uart -- \
   -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config" \
-  -DZMK_EXTRA_MODULES="$(pwd)/.."
+  -DZMK_EXTRA_MODULES="$(pwd)/.." -DCONFIG_ZMK_STUDIO=y
 
 west build -s zmk/app -d build/right -b nice_nano_v2 -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
   -DZMK_EXTRA_MODULES="$(pwd)/.."
 ```
+
+The `-S studio-rpc-usb-uart` snippet and `-DCONFIG_ZMK_STUDIO=y` enable [ZMK
+Studio](https://zmk.dev/docs/features/studio) — only needed on the **central**
+build (`corne_left` by default; see below for the reversed-role case).
 
 `ZMK_EXTRA_MODULES` points at the repo root, which has a `zephyr/module.yml`
 pulling in `rgb_layer_color/` (the RGB-underglow-by-layer module). GitHub
@@ -147,10 +159,10 @@ west build -s zmk/app -d build/left-peripheral -b nice_nano_v2 -- \
   -DZMK_EXTRA_MODULES="$(pwd)/.." \
   -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=n
 
-west build -s zmk/app -d build/right-central -b nice_nano_v2 -- \
+west build -s zmk/app -d build/right-central -b nice_nano_v2 -S studio-rpc-usb-uart -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
   -DZMK_EXTRA_MODULES="$(pwd)/.." \
-  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y
+  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y -DCONFIG_ZMK_STUDIO=y
 ```
 
 Flash `corne_left` + `corne_right` together (left plugged into USB), or
@@ -181,3 +193,24 @@ halves talk to each other automatically once paired.
 stored Bluetooth bonds and persisted settings). Flash it the same way as
 above to either half if pairing gets stuck or you need a clean slate, then
 reflash that half with its normal `corne_left`/`corne_right` firmware.
+
+## ZMK Studio
+
+[ZMK Studio](https://zmk.dev/docs/features/studio) lets you edit the keymap
+at runtime (over USB) without reflashing. The `corne` shield already ships an
+in-tree physical layout, so no board/shield changes were needed — only the
+central build needs the `studio-rpc-usb-uart` snippet and
+`CONFIG_ZMK_STUDIO=y` (see `build.yaml` / step 5 above).
+
+- The keymap has a `&studio_unlock` binding on `lower_layer`, bottom-right key
+  (under `'`) — hold `lower` and press it to unlock the keyboard for Studio
+  edits.
+- Connect at <https://zmk.studio/> (Chrome/Edge) or the [native
+  app](https://zmk.studio/download), over USB, to the **central** half (the
+  one plugged in). On Linux you may need to be in the `dialout` or `uucp`
+  group to access the USB serial port.
+- Once you've made changes in Studio, don't hand-edit `config/corne.keymap`
+  again unless you first do "Restore Stock Settings" from the Studio UI —
+  local keymap edits are ignored after Studio has taken over, with the
+  exception of adding new empty (`status = "reserved";`) layers for Studio to
+  use.
