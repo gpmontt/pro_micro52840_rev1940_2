@@ -105,3 +105,10 @@ board/shield, otherwise a plain `west build -d build/left` re-run picks up
 
 Pair each half over Bluetooth from your OS once both are flashed; the two
 halves talk to each other automatically once paired.
+
+### Resetting settings/bonds
+
+`build.yaml` also builds a `settings_reset` firmware (no keymap, just wipes
+stored Bluetooth bonds and persisted settings). Flash it the same way as
+above to either half if pairing gets stuck or you need a clean slate, then
+reflash that half with its normal `corne_left`/`corne_right` firmware.
