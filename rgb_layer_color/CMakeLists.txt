@@ -1,0 +1,5 @@
+if(CONFIG_RGB_UNDERGLOW_LAYER_COLOR)
+  zephyr_library()
+  zephyr_library_include_directories(${APPLICATION_SOURCE_DIR}/include)
+  zephyr_library_sources(src/rgb_underglow_layer_color.c)
+endif()

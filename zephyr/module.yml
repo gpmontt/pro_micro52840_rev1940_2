@@ -1,3 +1,6 @@
+name: rgb_layer_color
 build:
+  cmake: rgb_layer_color
+  kconfig: rgb_layer_color/Kconfig
   settings:
     board_root: .

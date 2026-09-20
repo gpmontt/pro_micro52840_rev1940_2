@@ -1,0 +1,38 @@
+if ZMK_RGB_UNDERGLOW
+
+config RGB_UNDERGLOW_LAYER_COLOR
+    bool "Change underglow color when a specific layer is active"
+    default y
+    depends on (!ZMK_SPLIT || (ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL))
+    help
+      While the configured layer is the highest active layer, override
+      the RGB underglow color with a fixed hue/saturation/brightness.
+      The previous color is restored once that layer deactivates.
+
+      Layer state is only known on the central half of a split keyboard,
+      so this is unavailable on peripheral builds.
+
+if RGB_UNDERGLOW_LAYER_COLOR
+
+config RGB_UNDERGLOW_LAYER_COLOR_LAYER
+    int "Layer index that triggers the color change"
+    default 2
+
+config RGB_UNDERGLOW_LAYER_COLOR_HUE
+    int "Hue (0-359) to use while that layer is active"
+    range 0 359
+    default 130
+
+config RGB_UNDERGLOW_LAYER_COLOR_SAT
+    int "Saturation (0-100) to use while that layer is active"
+    range 0 100
+    default 100
+
+config RGB_UNDERGLOW_LAYER_COLOR_BRT
+    int "Brightness (0-100) to use while that layer is active"
+    range 0 100
+    default 100
+
+endif # RGB_UNDERGLOW_LAYER_COLOR
+
+endif # ZMK_RGB_UNDERGLOW
