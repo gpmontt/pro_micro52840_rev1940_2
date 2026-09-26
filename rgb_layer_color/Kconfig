@@ -79,6 +79,17 @@ config RGB_BT_PROFILE_INDICATOR_LED_2
     range -1 255
     default -1
 
+config RGB_BT_PROFILE_INDICATOR_BLINK_TIMEOUT_S
+    int "Seconds to blink while the active profile is not connected, 0 = forever"
+    range 0 3600
+    default 60
+    help
+      ZMK keeps advertising until a host connects and reports no pairing
+      failures, so the blink is time-limited instead. After this many
+      seconds without a connection the profile LED goes back to the
+      underglow (layer) color. The timer restarts when the active profile
+      changes or its host connects/disconnects.
+
 config RGB_BT_PROFILE_INDICATOR_FINDER
     bool "LED finder mode"
     help

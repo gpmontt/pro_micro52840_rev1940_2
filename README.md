@@ -254,7 +254,14 @@ underglow is on, the LED under the key for the active profile (BT0 = R,
 BT1 = F, BT2 = V on the base layer) is lit white:
 
 - **solid** — that profile's host is connected
-- **blinking** — waiting for the host to connect (or to be paired)
+- **blinking** — waiting for the host to connect (or to be paired), for up to
+  60 s; after that it gives up and shows the layer color like the other keys
+
+ZMK keeps advertising until a host connects and never reports a failed
+pairing, so the blink is limited by time rather than by attempts. The timer
+restarts when you switch profile or the host connects/disconnects, so
+reselecting the profile (switch away and back) blinks it again. Change the
+limit with `CONFIG_RGB_BT_PROFILE_INDICATOR_BLINK_TIMEOUT_S` (0 = blink forever).
 
 This comes from `rgb_layer_color/src/led_strip_indicator.c`, a pass-through
 LED strip: `config/corne.keymap` points the `zmk,underglow` chosen node at it

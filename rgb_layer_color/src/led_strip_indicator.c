@@ -7,8 +7,10 @@
  *
  * The active profile's LED (RGB_BT_PROFILE_INDICATOR_LED_<n>) is white at
  * the underglow's current brightness: solid while its host is connected,
- * blinking while it isn't. Profile state only exists on the central half;
- * on a peripheral this is a plain pass-through.
+ * blinking while it isn't, for up to RGB_BT_PROFILE_INDICATOR_BLINK_TIMEOUT_S
+ * seconds, after which it shows the underglow (layer color) again until the
+ * profile or its connection state changes. Profile state only exists on the
+ * central half; on a peripheral this is a plain pass-through.
  */
 
 #define DT_DRV_COMPAT gpmontt_led_strip_indicator
@@ -51,16 +53,37 @@ static const int profile_leds[] = {
 };
 
 static void show_profile(size_t num_pixels) {
+    static int last_profile = -1;
+    static bool last_connected;
+    static int64_t blink_start;
+
     int profile = zmk_ble_active_profile_index();
+    bool connected = zmk_ble_active_profile_is_connected();
     int led = profile >= 0 && profile < ARRAY_SIZE(profile_leds) ? profile_leds[profile] : -1;
+    int64_t now = k_uptime_get();
+
+    /* Restart the blink window on a profile switch or a connection change. */
+    if (profile != last_profile || connected != last_connected) {
+        last_profile = profile;
+        last_connected = connected;
+        blink_start = now;
+    }
 
     if (led < 0 || led >= num_pixels) {
         return;
     }
 
-    if (!zmk_ble_active_profile_is_connected() && (k_uptime_get() / BLINK_MS) % 2) {
-        buf[led] = (struct led_rgb){0};
-        return;
+    if (!connected) {
+        /* Gave up waiting for the host: leave the underglow (layer color) as is. */
+        if (CONFIG_RGB_BT_PROFILE_INDICATOR_BLINK_TIMEOUT_S > 0 &&
+            now - blink_start >= CONFIG_RGB_BT_PROFILE_INDICATOR_BLINK_TIMEOUT_S * 1000LL) {
+            return;
+        }
+
+        if ((now / BLINK_MS) % 2) {
+            buf[led] = (struct led_rgb){0};
+            return;
+        }
     }
 
     /* Match the brightness the underglow is using for this pixel. */
