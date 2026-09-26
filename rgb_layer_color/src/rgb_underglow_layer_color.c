@@ -1,8 +1,8 @@
 /*
- * Overrides the RGB underglow color while layer 1 or layer 2 is the
- * highest active layer, restoring the previous color once back on the
- * base layer. See Kconfig (RGB_UNDERGLOW_LAYER_COLOR*) to configure the
- * colors.
+ * Overrides the RGB underglow color while a layer with a configured hue
+ * is the highest active layer, restoring the previous color once no such
+ * layer is active. See Kconfig (RGB_UNDERGLOW_LAYER_COLOR*) to configure
+ * the colors.
  *
  * The color is applied by invoking the &rgb_ug behavior rather than
  * calling zmk_rgb_underglow_set_hsb() directly: &rgb_ug has global
@@ -19,6 +19,16 @@
 #include <zmk/events/position_state_changed.h>
 #include <zmk/keymap.h>
 #include <zmk/rgb_underglow.h>
+
+/* Indexed by layer; -1 means "no override" (layer 0 never overrides). */
+static const int layer_hues[] = {
+    -1,
+    CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L1_HUE,
+    CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L2_HUE,
+    CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L3_HUE,
+    CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L4_HUE,
+    CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L5_HUE,
+};
 
 static struct zmk_led_hsb saved_color;
 static bool color_saved;
@@ -42,19 +52,8 @@ static void apply_color(struct zmk_led_hsb color) {
 }
 
 static int rgb_underglow_layer_color_listener(const zmk_event_t *eh) {
-    int hue;
-
-    switch (zmk_keymap_highest_layer_active()) {
-    case 1:
-        hue = CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L1_HUE;
-        break;
-    case 2:
-        hue = CONFIG_RGB_UNDERGLOW_LAYER_COLOR_L2_HUE;
-        break;
-    default:
-        hue = -1;
-        break;
-    }
+    uint8_t layer = zmk_keymap_highest_layer_active();
+    int hue = layer < ARRAY_SIZE(layer_hues) ? layer_hues[layer] : -1;
 
     if (hue >= 0) {
         if (!color_saved) {

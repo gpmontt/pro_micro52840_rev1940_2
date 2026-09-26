@@ -1,13 +1,14 @@
 if ZMK_RGB_UNDERGLOW
 
 config RGB_UNDERGLOW_LAYER_COLOR
-    bool "Change underglow color while layer 1 or 2 is active"
+    bool "Change underglow color per active layer"
     default y
     depends on (!ZMK_SPLIT || (ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL))
     help
-      While layer 1 or layer 2 is the highest active layer, override
-      the RGB underglow color (on both halves) with that layer's hue.
-      The previous color is restored once back on the base layer.
+      While a layer with a configured hue (RGB_UNDERGLOW_LAYER_COLOR_L<n>_HUE)
+      is the highest active layer, override the RGB underglow color (on
+      both halves) with that hue. The previous color is restored once no
+      such layer is active.
 
       Layer state is only known on the central half of a split keyboard,
       so this is unavailable on peripheral builds.
@@ -17,12 +18,27 @@ if RGB_UNDERGLOW_LAYER_COLOR
 config RGB_UNDERGLOW_LAYER_COLOR_L1_HUE
     int "Hue (0-359) to use while layer 1 is active, -1 to leave unchanged"
     range -1 359
-    default 240
+    default -1
 
 config RGB_UNDERGLOW_LAYER_COLOR_L2_HUE
     int "Hue (0-359) to use while layer 2 is active, -1 to leave unchanged"
     range -1 359
-    default 130
+    default -1
+
+config RGB_UNDERGLOW_LAYER_COLOR_L3_HUE
+    int "Hue (0-359) to use while layer 3 is active, -1 to leave unchanged"
+    range -1 359
+    default -1
+
+config RGB_UNDERGLOW_LAYER_COLOR_L4_HUE
+    int "Hue (0-359) to use while layer 4 is active, -1 to leave unchanged"
+    range -1 359
+    default -1
+
+config RGB_UNDERGLOW_LAYER_COLOR_L5_HUE
+    int "Hue (0-359) to use while layer 5 is active, -1 to leave unchanged"
+    range -1 359
+    default -1
 
 config RGB_UNDERGLOW_LAYER_COLOR_SAT
     int "Saturation (0-100) to use for the layer colors"
