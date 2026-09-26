@@ -7,6 +7,32 @@
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/rgb.h>
+#include <dt-bindings/zmk/outputs.h>
+
+/*
+ * Blue (clicky) switches chatter more than the 5ms ZMK default debounce
+ * accounts for, causing random double key presses. Raise both press and
+ * release debounce to filter that out. (Placed here, not in
+ * nice_nano_v2.overlay, because &kscan0 is only defined once the shield's
+ * corne.dtsi has been merged in, which happens before the keymap overlay
+ * is applied but after the board overlay.)
+ */
+&kscan0 {
+    debounce-press-ms = <10>;
+    debounce-release-ms = <10>;
+};
+
+/*
+ * Same ordering gotcha as &kscan0 above: led_strip is defined by the
+ * shield's boards/nice_nano_v2.overlay, merged in after the board overlay
+ * but before this keymap overlay, so the override has to live here.
+ * Corrects the shield's default chain-length (10) to this build's actual
+ * LED count (15: back-edge underglow + under-switch).
+ */
+&led_strip {
+    chain-length = <15>;
+};
 
 / {
         keymap {
@@ -28,13 +54,13 @@
                 lower_layer {
 // -----------------------------------------------------------------------------------------
 // |  TAB |  1  |  2  |  3  |  4  |  5  |   |  6  |  7  |  8  |  9  |  0  | BSPC |
-// | BTCLR| BT1 | BT2 | BT3 | BT4 | BT5 |   | LFT | DWN |  UP | RGT |     |STUDIO|
-// | SHFT |     |     |     |     |     |   |     |     |     |     |     |      |
+// | CTRL |BTCLR|BTPRV|BTNXT|OUTTG|     |   | LFT | DWN |  UP | RGT |     |STUDIO|
+// | SHFT |RGBTG|     |     |     |     |   |     |     |     |     |     |      |
 //                    | GUI |     | SPC |   | ENT |     | ALT |
                         bindings = <
    &kp TAB    &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
-   &bt BT_CLR &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &studio_unlock
-   &kp LSHFT  &trans       &trans       &trans       &trans       &trans         &trans   &trans   &trans &trans    &trans &trans
+   &kp LCTRL  &bt BT_CLR   &bt BT_PRV   &bt BT_NXT   &out OUT_TOG &trans         &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &studio_unlock
+   &kp LSHFT  &rgb_ug RGB_TOG &trans    &trans       &trans       &trans         &trans   &trans   &trans &trans    &trans &trans
                                     &kp LGUI     &trans       &kp SPACE      &kp RET  &trans   &kp RALT
                         >;
                 };
