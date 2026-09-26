@@ -250,8 +250,8 @@ central build needs the `studio-rpc-usb-uart` snippet and
 ## BT profile indicator
 
 The config layer has three keys that select Bluetooth profiles 0–2. While
-underglow is on, the LED under the left thumb key for the active profile
-(BT0 = key 36, BT1 = key 37, BT2 = key 38) is lit white:
+underglow is on, the LED under the key for the active profile (BT0 = R,
+BT1 = F, BT2 = V on the base layer) is lit white:
 
 - **solid** — that profile's host is connected
 - **blinking** — waiting for the host to connect (or to be paired)
@@ -262,9 +262,9 @@ instead of the real strip, and it overrides the profile's pixel on the way
 through. The LED chain index for each profile is set in `config/corne.conf`:
 
 ```
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_0=15  # key 36
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_1=14  # key 37
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_2=7   # key 38
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_0=11  # R
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_1=12  # F
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_2=13  # V
 ```
 
 ### Finding LED indices

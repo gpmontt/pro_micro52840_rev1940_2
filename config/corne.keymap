@@ -231,9 +231,9 @@
 
         config {
             // -----------------------------------------------------------------------------------------
-            // |      | BT0 | BT1 | BT2 |OUTTG|STUDI|   |STUDI| F12 |  F7 |  F8 |  F9 |      |
+            // |      | BT0 | BT1 | BT2 |     |STUDI|   |STUDI| F12 |  F7 |  F8 |  F9 |      |
             // |      |BTCLR|CLMAK|BTCLA|RGBTG|RGBEF|   |     | F11 |  F4 |  F5 |  F6 |      |
-            // | EXTPW|     |     |     |BRT- |BRT+ |   |     | F10 |  F1 |  F2 |  F3 |      |
+            // | EXTPW|     |OUTUSB|OUTBLE|BRT- |BRT+ |   |     | F10 |  F1 |  F2 |  F3 |      |
             //                    |     |     |     |   |     |VOL- |VOL+ |
             // BT0-2 = select BT profile, BTCLR = clear current profile, BTCLA = clear all profiles,
             // OUTTG = toggle USB/BLE output,
@@ -242,9 +242,9 @@
             // EXTPW = toggle LED power, blank = transparent, x = none
 
             bindings = <
-&trans             &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2    &out OUT_TOG     &studio_unlock   &studio_unlock  &kp F12  &kp F7  &kp F8  &kp F9  &trans
+&trans             &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2    &trans           &studio_unlock   &studio_unlock  &kp F12  &kp F7  &kp F8  &kp F9  &trans
 &trans             &bt BT_CLR    &tog COLEMAK  &bt BT_CLR_ALL  &rgb_ug RGB_TOG  &rgb_ug RGB_EFF  &trans          &kp F11  &kp F4  &kp F5  &kp F6  &trans
-&ext_power EP_TOG  &trans        &trans        &trans          &rgb_ug RGB_BRD  &rgb_ug RGB_BRI  &trans          &kp F10  &kp F1  &kp F2  &kp F3  &trans
+&ext_power EP_TOG  &trans        &out OUT_USB  &out OUT_BLE        &rgb_ug RGB_BRD  &rgb_ug RGB_BRI  &trans          &kp F10  &kp F1  &kp F2  &kp F3  &trans
                                                &trans          &trans           &trans           &trans          &kp C_VOLUME_DOWN  &kp C_VOLUME_UP
             >;
         };
