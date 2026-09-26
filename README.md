@@ -262,9 +262,9 @@ instead of the real strip, and it overrides the profile's pixel on the way
 through. The LED chain index for each profile is set in `config/corne.conf`:
 
 ```
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_0=11  # R
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_1=12  # F
-CONFIG_RGB_BT_PROFILE_INDICATOR_LED_2=13  # V
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_0=10  # R
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_1=11  # F
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_2=12  # V
 ```
 
 ### Finding LED indices
