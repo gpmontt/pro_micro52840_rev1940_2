@@ -1,19 +1,23 @@
 if ZMK_RGB_UNDERGLOW
 
 config RGB_UNDERGLOW_LAYER_COLOR
-    bool "Change underglow color per active layer"
+    bool "Set underglow color from the active layer"
     default y
     depends on (!ZMK_SPLIT || (ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL))
     help
-      While a layer with a configured hue (RGB_UNDERGLOW_LAYER_COLOR_L<n>_HUE)
-      is the highest active layer, override the RGB underglow color (on
-      both halves) with that hue. The previous color is restored once no
-      such layer is active.
+      Set the RGB underglow hue (on both halves) from the highest active
+      layer, using RGB_UNDERGLOW_LAYER_COLOR_L<n>_HUE. A layer with hue -1
+      leaves the color unchanged. Brightness is left as it is.
 
       Layer state is only known on the central half of a split keyboard,
       so this is unavailable on peripheral builds.
 
 if RGB_UNDERGLOW_LAYER_COLOR
+
+config RGB_UNDERGLOW_LAYER_COLOR_L0_HUE
+    int "Hue (0-359) to use while layer 0 is active, -1 to leave unchanged"
+    range -1 359
+    default -1
 
 config RGB_UNDERGLOW_LAYER_COLOR_L1_HUE
     int "Hue (0-359) to use while layer 1 is active, -1 to leave unchanged"
@@ -45,11 +49,43 @@ config RGB_UNDERGLOW_LAYER_COLOR_SAT
     range 0 100
     default 100
 
-config RGB_UNDERGLOW_LAYER_COLOR_BRT
-    int "Brightness (0-100) to use for the layer colors"
-    range 0 100
-    default 100
-
 endif # RGB_UNDERGLOW_LAYER_COLOR
+
+config RGB_BT_PROFILE_INDICATOR
+    bool "Show the active Bluetooth profile on a per-key LED"
+    default y
+    depends on DT_HAS_GPMONTT_LED_STRIP_INDICATOR_ENABLED
+    help
+      Enables the gpmontt,led-strip-indicator pass-through strip. On the
+      central half it lights the LED for the active BT profile
+      (RGB_BT_PROFILE_INDICATOR_LED_<n>) white: solid while that profile's
+      host is connected, blinking while it isn't. On a peripheral half it
+      just passes the underglow through unchanged.
+
+if RGB_BT_PROFILE_INDICATOR
+
+config RGB_BT_PROFILE_INDICATOR_LED_0
+    int "LED chain index to light for BT profile 0, -1 for none"
+    range -1 255
+    default -1
+
+config RGB_BT_PROFILE_INDICATOR_LED_1
+    int "LED chain index to light for BT profile 1, -1 for none"
+    range -1 255
+    default -1
+
+config RGB_BT_PROFILE_INDICATOR_LED_2
+    int "LED chain index to light for BT profile 2, -1 for none"
+    range -1 255
+    default -1
+
+config RGB_BT_PROFILE_INDICATOR_FINDER
+    bool "LED finder mode"
+    help
+      Instead of the normal underglow, light one LED at a time (2 seconds
+      each) and log its chain index, to find which index sits under which
+      key. Needs underglow on; read the log over USB (CONFIG_ZMK_USB_LOGGING).
+
+endif # RGB_BT_PROFILE_INDICATOR
 
 endif # ZMK_RGB_UNDERGLOW

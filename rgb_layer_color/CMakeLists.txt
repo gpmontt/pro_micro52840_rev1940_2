@@ -1,5 +1,6 @@
-if(CONFIG_RGB_UNDERGLOW_LAYER_COLOR)
+if(CONFIG_RGB_UNDERGLOW_LAYER_COLOR OR CONFIG_RGB_BT_PROFILE_INDICATOR)
   zephyr_library()
   zephyr_library_include_directories(${APPLICATION_SOURCE_DIR}/include)
-  zephyr_library_sources(src/rgb_underglow_layer_color.c)
+  zephyr_library_sources_ifdef(CONFIG_RGB_UNDERGLOW_LAYER_COLOR src/rgb_underglow_layer_color.c)
+  zephyr_library_sources_ifdef(CONFIG_RGB_BT_PROFILE_INDICATOR src/led_strip_indicator.c)
 endif()

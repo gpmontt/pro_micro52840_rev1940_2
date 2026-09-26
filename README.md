@@ -9,8 +9,9 @@ Pro Micro nRF52840 board used here is a nice!nano-pinout-compatible clone).
 - `build.yaml` — build matrix (`nice_nano_v2` + `corne_left` / `corne_right`)
 - `zephyr/module.yml` — declares this repo as a Zephyr module (custom
   `boards/`, plus the `rgb_layer_color` module below)
-- `rgb_layer_color/` — custom module: overrides the underglow color while a
-  configured layer is active (central-only, see gotcha below)
+- `rgb_layer_color/` — custom module: sets the underglow color from the
+  active layer (central-only, see gotcha below), and lights a key LED for the
+  active Bluetooth profile (see [BT profile indicator](#bt-profile-indicator))
 - `.zmk/` — local west workspace (gitignored, created by the steps below)
 
 ## Option A: GitHub Actions (no local setup)
@@ -95,7 +96,8 @@ cd .zmk
 
 west build -s zmk/app -d build/left -b nice_nano_v2 -S studio-rpc-usb-uart -- \
   -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config" \
-  -DZMK_EXTRA_MODULES="$(pwd)/.." -DCONFIG_ZMK_STUDIO=y
+  -DZMK_EXTRA_MODULES="$(pwd)/.." -DCONFIG_ZMK_STUDIO=y \
+  -DCONFIG_BT_MAX_CONN=4 -DCONFIG_BT_MAX_PAIRED=4
 
 west build -s zmk/app -d build/right -b nice_nano_v2 -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
@@ -105,6 +107,10 @@ west build -s zmk/app -d build/right -b nice_nano_v2 -- \
 The `-S studio-rpc-usb-uart` snippet and `-DCONFIG_ZMK_STUDIO=y` enable [ZMK
 Studio](https://zmk.dev/docs/features/studio) — only needed on the **central**
 build (`corne_left` by default; see below for the reversed-role case).
+
+`-DCONFIG_BT_MAX_CONN=4 -DCONFIG_BT_MAX_PAIRED=4` limits the central to 3
+Bluetooth host profiles (one connection is reserved for the peripheral
+half). Like Studio, it only belongs on the central build.
 
 `ZMK_EXTRA_MODULES` points at the repo root, which has a `zephyr/module.yml`
 pulling in `rgb_layer_color/` (the RGB-underglow-by-layer module). GitHub
@@ -162,7 +168,8 @@ west build -s zmk/app -d build/left-peripheral -b nice_nano_v2 -- \
 west build -s zmk/app -d build/right-central -b nice_nano_v2 -S studio-rpc-usb-uart -- \
   -DSHIELD=corne_right -DZMK_CONFIG="$(pwd)/../config" \
   -DZMK_EXTRA_MODULES="$(pwd)/.." \
-  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y -DCONFIG_ZMK_STUDIO=y
+  -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y -DCONFIG_ZMK_STUDIO=y \
+  -DCONFIG_BT_MAX_CONN=4 -DCONFIG_BT_MAX_PAIRED=4
 ```
 
 Flash `corne_left` + `corne_right` together (left plugged into USB), or
@@ -171,9 +178,29 @@ USB) — never mix a central build from one set with a peripheral build from
 the other. After switching which set is flashed, re-pair both halves (flash
 `settings_reset` to both first if pairing seems stuck).
 
-To rebuild after keymap/config changes, add `-p` (pristine) if you change
-board/shield, otherwise a plain `west build -d build/left` re-run picks up
-`config/` edits.
+#### Rebuilding after changes
+
+Once a build directory exists, it remembers its board, shield, snippet and
+`-D` flags, so a re-run only needs the directory:
+
+```sh
+source .zmk/.venv/bin/activate
+export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-0.16.8"
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+cd .zmk
+
+west build -d build/left
+west build -d build/right
+```
+
+This picks up edits to `config/` and `rgb_layer_color/`. Use the full commands
+from step 5 with `-p` (pristine) instead when you change the board, shield,
+snippet or a `-D` flag, add a new Kconfig option or devicetree binding, or the
+build fails with stale-cache errors.
+
+Check that each build actually succeeded (`echo $?` should print `0`) before
+flashing — don't pipe `west build` through `tail`/`head`, which replaces its
+exit code with theirs and makes a failed build look successful.
 
 ### 6. Flash
 
@@ -181,7 +208,12 @@ board/shield, otherwise a plain `west build -d build/left` re-run picks up
 2. Double-tap the reset button on the Pro Micro nRF52840 — it mounts as a USB
    drive (e.g. `NICENANO` or similar).
 3. Copy the matching `zmk.uf2` (left → left half, right → right half) onto
-   that drive. The board reboots automatically with new firmware.
+   that drive. The board reboots automatically with new firmware. From the
+   terminal:
+   ```sh
+   cp .zmk/build/left/zephyr/zmk.uf2 /run/media/$USER/NICENANO/
+   ```
+   (check the mount point with `lsblk` if it differs).
 4. Repeat for the other half.
 
 Pair each half over Bluetooth from your OS once both are flashed; the two
@@ -202,9 +234,9 @@ in-tree physical layout, so no board/shield changes were needed — only the
 central build needs the `studio-rpc-usb-uart` snippet and
 `CONFIG_ZMK_STUDIO=y` (see `build.yaml` / step 5 above).
 
-- The keymap has a `&studio_unlock` binding on `lower_layer`, bottom-right key
-  (under `'`) — hold `lower` and press it to unlock the keyboard for Studio
-  edits.
+- The keymap has `&studio_unlock` on the `config` layer (the two inner
+  top-row keys) — activate `config` and press either to unlock the keyboard
+  for Studio edits.
 - Connect at <https://zmk.studio/> (Chrome/Edge) or the [native
   app](https://zmk.studio/download), over USB, to the **central** half (the
   one plugged in). On Linux you may need to be in the `dialout` or `uucp`
@@ -214,3 +246,48 @@ central build needs the `studio-rpc-usb-uart` snippet and
   local keymap edits are ignored after Studio has taken over, with the
   exception of adding new empty (`status = "reserved";`) layers for Studio to
   use.
+
+## BT profile indicator
+
+The config layer has three keys that select Bluetooth profiles 0–2. While
+underglow is on, the LED under the left thumb key for the active profile
+(BT0 = key 36, BT1 = key 37, BT2 = key 38) is lit white:
+
+- **solid** — that profile's host is connected
+- **blinking** — waiting for the host to connect (or to be paired)
+
+This comes from `rgb_layer_color/src/led_strip_indicator.c`, a pass-through
+LED strip: `config/corne.keymap` points the `zmk,underglow` chosen node at it
+instead of the real strip, and it overrides the profile's pixel on the way
+through. The LED chain index for each profile is set in `config/corne.conf`:
+
+```
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_0=15  # key 36
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_1=14  # key 37
+CONFIG_RGB_BT_PROFILE_INDICATOR_LED_2=7   # key 38
+```
+
+### Finding LED indices
+
+Build the left half in finder mode, which lights one LED at a time (2 s
+each) and logs its index over USB:
+
+```sh
+cd .zmk
+west build -p -s zmk/app -d build/left-finder -b nice_nano_v2 -S studio-rpc-usb-uart -- \
+  -DSHIELD=corne_left -DZMK_CONFIG="$(pwd)/../config" \
+  -DZMK_EXTRA_MODULES="$(pwd)/.." -DCONFIG_ZMK_STUDIO=y \
+  -DCONFIG_BT_MAX_CONN=4 -DCONFIG_BT_MAX_PAIRED=4 \
+  -DCONFIG_RGB_BT_PROFILE_INDICATOR_FINDER=y
+```
+
+Flash `build/left-finder/zephyr/zmk.uf2` to the left half, keep it on USB
+with underglow on, and watch the log:
+
+```sh
+cat /dev/ttyACM0
+```
+
+Note the `LED finder: lighting LED <n>` numbers that appear while the LED under
+each key is lit, set them in `corne.conf`, then rebuild and flash the normal
+`build/left` firmware.

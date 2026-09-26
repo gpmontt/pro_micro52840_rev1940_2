@@ -38,10 +38,29 @@
  * shield's boards/nice_nano_v2.overlay, merged in after the board overlay
  * but before this keymap overlay, so the override has to live here.
  * Corrects the shield's default chain-length (10) to this build's actual
- * LED count (15: back-edge underglow + under-switch).
+ * LED count (21: back-edge underglow + under-switch).
  */
+#define LED_COUNT 21
+
 &led_strip {
-    chain-length = <15>;
+    chain-length = <LED_COUNT>;
+};
+
+/*
+ * Route the underglow through the BT profile indicator (rgb_layer_color
+ * module), which lights the active profile's key LED on top of it. LED
+ * indices are set in corne.conf (RGB_BT_PROFILE_INDICATOR_LED_<n>).
+ */
+/ {
+    indicator_strip: indicator_strip {
+        compatible = "gpmontt,led-strip-indicator";
+        led-strip = <&led_strip>;
+        chain-length = <LED_COUNT>;
+    };
+
+    chosen {
+        zmk,underglow = &indicator_strip;
+    };
 };
 
 / {
@@ -212,19 +231,21 @@
 
         config {
             // -----------------------------------------------------------------------------------------
-            // |      |BTPRV|BTNXT| USB | BLE |STUDI|   |STUDI| F12 |  F7 |  F8 |  F9 |      |
-            // | BTCLR|CLMAK|  x  |     |RGBTG|RGBEF|   |     | F11 |  F4 |  F5 |  F6 |      |
+            // |      | BT0 | BT1 | BT2 |OUTTG|STUDI|   |STUDI| F12 |  F7 |  F8 |  F9 |      |
+            // |      |BTCLR|CLMAK|BTCLA|RGBTG|RGBEF|   |     | F11 |  F4 |  F5 |  F6 |      |
             // | EXTPW|     |     |     |BRT- |BRT+ |   |     | F10 |  F1 |  F2 |  F3 |      |
             //                    |     |     |     |   |     |VOL- |VOL+ |
+            // BT0-2 = select BT profile, BTCLR = clear current profile, BTCLA = clear all profiles,
+            // OUTTG = toggle USB/BLE output,
             // CLMAK = toggle Colemak-DH, STUDI = ZMK Studio unlock, RGBTG = underglow on/off,
             // RGBEF = next underglow effect, BRT-/+ = underglow brightness,
             // EXTPW = toggle LED power, blank = transparent, x = none
 
             bindings = <
-&trans             &bt BT_PRV  &bt BT_NXT  &out OUT_USB  &out OUT_BLE     &studio_unlock     &studio_unlock  &kp F12            &kp F7           &kp F8  &kp F9  &trans
-&bt BT_CLR         &tog COLEMAK &none      &trans        &rgb_ug RGB_TOG  &rgb_ug RGB_EFF    &trans          &kp F11            &kp F4           &kp F5  &kp F6  &trans
-&ext_power EP_TOG  &trans      &trans      &trans        &rgb_ug RGB_BRD  &rgb_ug RGB_BRI    &trans          &kp F10            &kp F1           &kp F2  &kp F3  &trans
-                                           &trans        &trans           &trans             &trans          &kp C_VOLUME_DOWN  &kp C_VOLUME_UP
+&trans             &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2    &out OUT_TOG     &studio_unlock   &studio_unlock  &kp F12  &kp F7  &kp F8  &kp F9  &trans
+&trans             &bt BT_CLR    &tog COLEMAK  &bt BT_CLR_ALL  &rgb_ug RGB_TOG  &rgb_ug RGB_EFF  &trans          &kp F11  &kp F4  &kp F5  &kp F6  &trans
+&ext_power EP_TOG  &trans        &trans        &trans          &rgb_ug RGB_BRD  &rgb_ug RGB_BRI  &trans          &kp F10  &kp F1  &kp F2  &kp F3  &trans
+                                               &trans          &trans           &trans           &trans          &kp C_VOLUME_DOWN  &kp C_VOLUME_UP
             >;
         };
     };

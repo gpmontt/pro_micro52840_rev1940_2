@@ -1,0 +1,17 @@
+description: |
+  Pass-through LED strip that forwards every update to a real strip,
+  overriding a few pixels to show the active Bluetooth profile. Point
+  the zmk,underglow chosen node at this instead of the real strip.
+
+compatible: "gpmontt,led-strip-indicator"
+
+properties:
+  led-strip:
+    type: phandle
+    required: true
+    description: The real LED strip to forward updates to.
+
+  chain-length:
+    type: int
+    required: true
+    description: Number of pixels; must match the real strip's chain-length.
